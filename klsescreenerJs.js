@@ -10,20 +10,25 @@
 var NUMBER_OF_YEAR = 5;
 var today = new Date();
 var todayYear = today.getFullYear();
+var divTable = $('span:contains(Category : )').parent().find('div[class="table-responsive"]');
+var table = $(divTable.children()[0]).find('tbody > tr');
+
+function getNativeTableValue(word) {
+    return table.find('td:contains('+word+')').next().text();
+}
+
 (function() {
     'use strict';
     getMaxNumberOfYear();
-    let divTable = $('span:contains(Category : )').parent().find('div[class="table-responsive"]');
-    let table = $(divTable.children()[0]).find('tbody > tr');
     let fifthRow = $(divTable.children()[0]).find('tbody > tr').eq(5);
     let trToWrite = '';
 
     //Growth
     let cagr = getCagr();
-    trToWrite = '<tr><td>G: CAGR</td><td class="number">'+cagr+'</td></tr>';
+    trToWrite = '<tr><td>G: ' + NUMBER_OF_YEAR + ' Yr(s) CAGR</td><td class="number">'+cagr+'</td></tr>';
 
     //Dividend
-    let dy = table.find('td:contains(DY)').next().text();
+    let dy = getNativeTableValue('DY');
     trToWrite = trToWrite + '<tr><td>D: DY</td><td class="number">'+dy+'</td></tr>';
 
     //Price
@@ -31,10 +36,8 @@ var todayYear = today.getFullYear();
 
     getPeRatio().then(function(res) {
         for (var i = 0; i < res.length; i++) {
-            trToWrite = trToWrite + '<tr><td>P/E: '+res[i].year+'</td><td class="number">'+res[i].pe+'</td></tr>';
+            trToWrite = trToWrite + '<tr><td>P/E: '+ (i == res.length - 1 ? 'Today' : res[i].year) +'</td><td class="number">'+res[i].pe+'</td></tr>';
         }
-
-        trToWrite = trToWrite + '<tr><td>P/E: '+todayYear+'</td><td class="number">'+pe+'</td></tr>';
 
         trToWrite = trToWrite + '<tr><td>&nbsp;</td><td>&nbsp;</td></tr>'; //blank row
         fifthRow.after(trToWrite);
@@ -76,6 +79,8 @@ function getEps() {
     for (let i = 0; i < NUMBER_OF_YEAR; i++) {
         eps.unshift($(annualTable.eq(startIndex++).children()[epsCol]).text());
     }
+
+    eps.push(getNativeTableValue('EPS'));
     return eps;
 }
 
@@ -95,7 +100,7 @@ function getPeRatio() {
             }
             lastFewYear.push({ "year": todayYear + i - NUMBER_OF_YEAR, "epoch": epochArray[i] });
         }
-//         lastFewYear.push({ "year": 2020, "epoch": result[result.length - 1][0] });
+        lastFewYear.push({ "year": 2020, "epoch": result[result.length - 1][0] });
 
         let count = 0;
         for (let i = 0; i < result.length; i++) {
@@ -107,7 +112,7 @@ function getPeRatio() {
         }
         let eps = getEps();
 
-        for (let i = 0; i < NUMBER_OF_YEAR; i++) {
+        for (let i = 0; i < NUMBER_OF_YEAR + 1; i++) {
             historicalPeRatio.push({"year": todayYear + i - NUMBER_OF_YEAR, "pe": (price[i].price * 100 / eps[i]).toFixed(2)});
         }
         return historicalPeRatio;
